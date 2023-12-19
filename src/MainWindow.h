@@ -6,8 +6,8 @@
 #include <QMainWindow>
 #include <QJsonObject>
 #include <QPointer>
+#include <QString>
 
-class QString;
 class QLabel;
 class QJsonObject;
 class QTableView;
@@ -38,6 +38,7 @@ private:
     QPushButton* openButtonPtr_ {};
     QPushButton* saveButtonPtr_ {};
     QPointer<ReportParser> parserPtr_ {};
+    QString reportBasename_ {};
     QJsonObject warningsResultObject_ {};
 private slots:
     void openSlot();

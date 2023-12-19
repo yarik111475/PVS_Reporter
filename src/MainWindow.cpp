@@ -21,7 +21,7 @@
 #include <QJsonDocument>
 #include <QMessageBox>
 #include <QTextStream>
-#include <tuple>
+#include <QFileInfo>
 
 struct Errors
 {
@@ -43,6 +43,8 @@ void MainWindow::openSlot()
             if(!reportDocument.isEmpty()){
                 parserPtr_->parseDocument(reportDocument);
                 filenameLineEditPtr_->setText(reportFilename);
+                QFileInfo reportFileinfo {reportFilename};
+                reportBasename_=reportFileinfo.baseName();
             }
         }
     }
@@ -52,7 +54,7 @@ void MainWindow::saveSlot()
 { 
     if(!warningsResultObject_.isEmpty()){
         const QString filter {"CSV files (*.csv)"};
-        const QString filename {QFileDialog::getSaveFileName(this,QObject::tr("Save file"),"",filter)};
+        const QString filename {QFileDialog::getSaveFileName(this,QObject::tr("Save file"),reportBasename_,filter)};
         if(!filename.isEmpty()){
             const QString projectName {warningsResultObject_.value("projectName").toString()};
 
