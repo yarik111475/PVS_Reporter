@@ -55,6 +55,7 @@ SET QMAKE_PATH="C:/Qt/Qt5.14.2/5.14.2/mingw73_64/bin/qmake.exe"
 
 ::deploy
 call %CQTDEPLOYER_DIR%\cqtdeployer.bat -qmake %QMAKE_PATH% -bin %INSTALL_DIR%\bin\PVS_Reporter.exe -targetDir %DEPLOY_DIR%\bin noTranslations
+call %CQTDEPLOYER_DIR%\cqtdeployer.bat -qmake %QMAKE_PATH% -bin %INSTALL_DIR%\bin\libqtcsv.dll -targetDir %DEPLOY_DIR%\bin noTranslations
 
 ::cd to -up- dir
 cd ..

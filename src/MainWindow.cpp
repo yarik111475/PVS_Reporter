@@ -2,6 +2,8 @@
 #include "MainWindow.h"
 #include "ReportParser.h"
 #include "LevelModel.h"
+#include "qtcsv/writer.h"
+#include "qtcsv/stringdata.h"
 
 #include <QFile>
 #include <QLabel>
@@ -18,6 +20,15 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QMessageBox>
+#include <QTextStream>
+#include <tuple>
+
+struct Errors
+{
+    int High;
+    int Medium;
+    int Low;
+};
 
 void MainWindow::openSlot()
 {
@@ -38,8 +49,58 @@ void MainWindow::openSlot()
 }
 
 void MainWindow::saveSlot()
-{
+{ 
+    if(!warningsResultObject_.isEmpty()){
+        const QString filter {"CSV files (*.csv)"};
+        const QString filename {QFileDialog::getSaveFileName(this,QObject::tr("Save file"),"",filter)};
+        if(!filename.isEmpty()){
+            const QString projectName {warningsResultObject_.value("projectName").toString()};
 
+            const int level1Warnings {warningsResultObject_.value("level1WarningsCount").toInt()};
+            const int level2Warnings {warningsResultObject_.value("level2WarningsCount").toInt()};
+            const int level3Warnings {warningsResultObject_.value("level3WarningsCount").toInt()};
+
+            QJsonArray level1ModelData=warningsResultObject_.value("level1WariningsArray").toArray();
+            QJsonArray level2ModelData=warningsResultObject_.value("level2WariningsArray").toArray();
+            QJsonArray level3ModelData=warningsResultObject_.value("level3WariningsArray").toArray();
+
+            QMap<QString,Errors> errorsMap {};
+            for(const auto& jsonValue: level1ModelData){
+                const QString fileName {jsonValue.toObject().value("fileName").toString()};
+                const int warnings {jsonValue.toObject().value("warningsCount").toInt()};
+                errorsMap[fileName].High+=warnings;
+            }
+            for(const auto& jsonValue: level2ModelData){
+                const QString fileName {jsonValue.toObject().value("fileName").toString()};
+                const int warnings {jsonValue.toObject().value("warningsCount").toInt()};
+                errorsMap[fileName].Medium+=warnings;
+            }
+            for(const auto& jsonValue: level3ModelData){
+                const QString fileName {jsonValue.toObject().value("fileName").toString()};
+                const int warnings {jsonValue.toObject().value("warningsCount").toInt()};
+                errorsMap[fileName].Low+=warnings;
+            }
+
+            QtCSV::StringData stringData {};
+            const QStringList titles {"Проект","Компонент","Уровень ошибок","","","Количество файлов"};
+            stringData.addRow(titles);
+            stringData.addRow({"Операционная система: MOS",projectName,"High","Medium","Low",QString::number(errorsMap.size())});
+            stringData.addRow({"","",QString::number(level1Warnings),QString::number(level2Warnings),QString::number(level3Warnings)});
+            stringData.addEmptyRow();
+            stringData.addRow({"Файл","Уровень ошибок (шт.)","",""});
+            stringData.addRow({"","High","Medium","Low"});
+
+            auto begin {errorsMap.begin()};
+            while(begin!=errorsMap.end()){
+                stringData.addRow({begin.key(),QString::number(begin.value().High),
+                                   QString::number(begin.value().Medium),
+                                   QString::number(begin.value().Low)});
+                ++begin;
+            }
+            QtCSV::Writer::write(filename,stringData);
+            QMessageBox::information(this,QObject::tr("Info"),QObject::tr("csv file created success"));
+        }
+    }
 }
 
 void MainWindow::parseFinishedSlot(bool success, const QJsonObject &warningsResultObject, const QString &lastError)
